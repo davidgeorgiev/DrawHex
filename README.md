@@ -1,1 +1,8 @@
 # DrawHex
+
+// EXAMPLE USE
+function mainDrawHexagons(){
+	$Info = array(array("Res","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0));
+	$MaxRes = 1024;
+	DrawHexagons($MaxRes,$Info);
+}

@@ -126,7 +126,7 @@ function MoveHexagon($MaxRes,$HexParams,$moveDirParam="none",$RandomDir=0,$Uniqu
 		}
 		$NewParams = SumHexParameterWith($HexParams,$NewDirection);
 		$DirTestingIndex++;
-	}while(($RandomDir==1)&&($UniquePos==1)&&(in_array($NewParams, $MyGlobalHistory)||max($NewParams)>$MaxRes||min($NewParams)<0)||((CountNeightbours($NewParams)<$CurrentMaxNeighbours)&&(count($MyGlobalHistory)>=2)));
+	}while(($RandomDir==1)&&($UniquePos==1)&&(in_array($NewParams, $MyGlobalHistory))||((CountNeightbours($NewParams)<$CurrentMaxNeighbours)&&(count($MyGlobalHistory)>=2)));
 	
 	return $NewParams;
 	
@@ -185,19 +185,76 @@ function ReturnDeformedHexagon($Hexagon,$TypeOfDeformation,$ResizeParameter=0){
 	}
 	return $DeformedHexagon;
 }
+function TryToMakeHexagonsFitTheScreen($Hexagons,$MaxRes,$widthRect,$PaddingFromTheBorders){
+	$divider = 0;
+	$step = 0.05;
+	$TryAgain = 0;
+	//$SmalestXAndSmallestY = ReturnSmalestXAndSmallestY($Hexagons,$MaxRes,$widthRect);
+	do{
+		$TryAgain = 0;
+		$divider+=$step;
+		
+		$PaddingX = $Hexagons[0][0]-($Hexagons[0][0]/$divider);
+		$PaddingY = $Hexagons[0][1]-($Hexagons[0][1]/$divider);
+		$FixedSize = array();
+		$FixedSizes = array();
+		foreach($Hexagons as $Hexagon) {
+			for ($i = 0; $i < count($Hexagon); $i++) {
+				if($i%2==0){
+					array_push($FixedSize, $Hexagon[$i]/$divider+$PaddingX+$widthRect);
+				}else{
+					array_push($FixedSize, $Hexagon[$i]/$divider+$PaddingY);
+				}
+			}
+		
+			array_push($FixedSizes, $FixedSize);
+			$FixedSize = array();
+		}
+		foreach($FixedSizes as $Current){
+			for ($i = 0; $i < count($Current); $i++) {
+				if((($i%2==0)&&($Current[$i]>$MaxRes+$widthRect-$PaddingFromTheBorders))||(($i%2==1)&&($Current[$i]>$MaxRes-$PaddingFromTheBorders))||($Current[$i]<$PaddingFromTheBorders)||(($i%2==0)&&($Current[$i]<($widthRect)))){
+					$TryAgain = 1;
+				}
+			}
+		}
+	}while($TryAgain==1);
+	
+	
+	return $FixedSizes;
+}
 
 function cmp($a, $b)
 {
     return strcmp($a[0], $b[0]);
 }
 
-function PrintAllHexagonsInArray($Info,$Hexagons,$MaxRes){
+/*function ReturnSmalestXAndSmallestY($Hexagons,$MaxRes,$widthRect){
+	$SmallestX = $MaxRes+$widthRect;
+	$SmallestY = $MaxRes;
+	foreach($Hexagons as $Hexagon) {
+		for ($i = 0; $i < count($Hexagon); $i++) {
+			if($i%2==0){
+				if($SmallestX>$Hexagon[$i]){
+					$SmallestX = $Hexagon[$i];
+				}
+			}else{
+				if($SmallestY>$Hexagon[$i]){
+					$SmallestY = $Hexagon[$i];
+				}
+			}
+		}
+	}
+	return array($SmallestX,$SmallestY);
+}*/
+
+function PrintAllHexagonsInArray($Info,$Hexagons,$MaxRes,$widthRect,$heightRect){
+	$myBGColor = GiveMeARandomHexColor(2,4);
 	$HexColor = GiveMeARandomHexColor(5,15);
 	$HexagonCounter = 0;
 	$prevGroup = "";
 	$GroupsAndColors = array();
 	usort($Info,"cmp");
-	echo '<svg style="background-color:'.GiveMeARandomHexColor(2,4).';" height="'.$MaxRes.'" width="'.($MaxRes+20).'">';
+	echo '<svg style="background-color:'.$myBGColor.';" height="'.$MaxRes.'" width="'.($MaxRes+$widthRect).'">';
 	foreach($Hexagons as $Hexagon) {
 		
 		$Hexagon = ReturnDeformedHexagon($Hexagon,2,$Info[$HexagonCounter][2]);
@@ -218,19 +275,14 @@ function PrintAllHexagonsInArray($Info,$Hexagons,$MaxRes){
 	$HexagonCounter=0;
 	foreach($Hexagons as $Hexagon) {
 		$HexagonCounter++;
-		echo '<text x='.($Hexagon[0]-45).' y='.($Hexagon[1]+5).'>'.$HexagonCounter.'</text>';
+		//echo '<text x='.($Hexagon[0]-45).' y='.($Hexagon[1]+5).'>'.$HexagonCounter.'</text>';
 	}
-	$widthRect = ($MaxRes/5);
-	$heightRect = 40;
+	
 	$xRect = -$widthRect;
-	$yRect = 0;
+	$yRect = -$heightRect;
 	foreach($GroupsAndColors as $Current){
-		if(($xRect+(2*$widthRect))<$MaxRes){
-			$xRect+=$widthRect;
-		}else{
 			$xRect = 0;
 			$yRect+=$heightRect;
-		}
 		
 		echo '<rect x="'.$xRect.'" y="'.$yRect.'" width="'.$widthRect.'" height="'.$heightRect.'" style="fill:'.$Current[1].';stroke-width:3;stroke:rgb(0,0,0)" />';
 		echo '<text x='.($xRect+15).' y='.($yRect+($heightRect/2)+5).'>'.$Current[0].'</text>';
@@ -258,7 +310,12 @@ function DrawHexagons($MaxRes,$Info){
 		}
 	}
 	
-	PrintAllHexagonsInArray($Info,$MyGlobalHistory,$MaxRes);
+	$widthRect = ($MaxRes/5);
+	$heightRect = 40;
+	//$CenteredArray = CenterAllHexagons($MyGlobalHistory,$widthRect);
+	//$MyGlobalHistory = $CenteredArray[2];
+	$MyGlobalHistory = TryToMakeHexagonsFitTheScreen($MyGlobalHistory,$MaxRes,$widthRect,20);
+	PrintAllHexagonsInArray($Info,$MyGlobalHistory,$MaxRes,$widthRect,$heightRect);
 	
 	
 	/*foreach($MyGlobalHistory as $Point) {
@@ -267,9 +324,57 @@ function DrawHexagons($MaxRes,$Info){
 	
 }
 
+function CenterAllHexagons($Hexagons,$widthRect){
+	$countDigitsX = 0;
+	$countDigitsY = 0;
+	$SumDigitsX = 0;
+	$SumDigitsY = 0;
+	$CenteredHexagons = array();
+	$CenteredHexagon = array();
+	foreach($Hexagons as $Hexagon) {
+		for ($i = 0; $i < count($Hexagon); $i++) {
+			if($i%2==0){
+				$countDigitsX++;
+				$SumDigitsX+=$Hexagon[$i];
+			}else{
+				$countDigitsY++;
+				$SumDigitsY+=$Hexagon[$i];
+			}
+		}
+	}
+	$AVGX = $SumDigitsX/$countDigitsX;
+	$AVGY = $SumDigitsY/$countDigitsY;
+	$PaddingX = $Hexagons[0][0]-$AVGX;
+	$PaddingY = $Hexagons[0][1]-$AVGY;
+	foreach($Hexagons as $Hexagon) {
+		for ($i = 0; $i < count($Hexagon); $i++) {
+			if($i%2==0){
+				array_push($CenteredHexagon, $Hexagon[$i]+$PaddingX+$widthRect);
+			}else{
+				array_push($CenteredHexagon, $Hexagon[$i]+$PaddingY);
+			}
+		}
+	
+		array_push($CenteredHexagons, $CenteredHexagon);
+		$CenteredHexagon = array();
+	}
+	return array($AVGX,$AVGY,$CenteredHexagons);
+}
+
 // EXAMPLE USE
 function mainDrawHexagons(){
-	$Info = array(array("Res","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0));
+	$Info = array(array("Res","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),
+	array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),
+	array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),
+	array("group1","Title 3",0),array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),
+	array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),
+	array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("Res","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),array("group2","Title 1",-3),
+	array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),
+	array("group1","Title 4",-3),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),
+	array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),
+	array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),
+	array("group1","Title 3",0),array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),
+	array("group2","Title 3",-2));
 	$MaxRes = 1024;
 	DrawHexagons($MaxRes,$Info);
 }

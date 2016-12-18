@@ -5,6 +5,8 @@ Description: DrawingHexagonGraph
 Author: David Georgiev
 Version: 1.0
 */
+require "ColorsConv.php";
+
 $r = 0;
 $g = 0;
 $b = 0;
@@ -170,18 +172,18 @@ function ReturnDeformedHexagon($Hexagon,$TypeOfDeformation,$ResizeParameter=0){
 		}
 	}
 	if($TypeOfDeformation == 2){//RESIZING
-		array_push($DeformedHexagon, $Hexagon[0]-$ResizeParameter);
+		array_push($DeformedHexagon, $Hexagon[0]-$ResizeParameter/1.2);
 		array_push($DeformedHexagon, $Hexagon[1]);
 		array_push($DeformedHexagon, $Hexagon[2]-($ResizeParameter/2));
-		array_push($DeformedHexagon, $Hexagon[3]-($ResizeParameter/2));
+		array_push($DeformedHexagon, $Hexagon[3]-($ResizeParameter/1.5));
 		array_push($DeformedHexagon, $Hexagon[4]+($ResizeParameter/2));
-		array_push($DeformedHexagon, $Hexagon[5]-($ResizeParameter/2));
-		array_push($DeformedHexagon, $Hexagon[6]+$ResizeParameter);
+		array_push($DeformedHexagon, $Hexagon[5]-($ResizeParameter/1.5));
+		array_push($DeformedHexagon, $Hexagon[6]+$ResizeParameter/1.2);
 		array_push($DeformedHexagon, $Hexagon[7]);
 		array_push($DeformedHexagon, $Hexagon[8]+($ResizeParameter/2));
-		array_push($DeformedHexagon, $Hexagon[9]+($ResizeParameter/2));
+		array_push($DeformedHexagon, $Hexagon[9]+($ResizeParameter/1.5));
 		array_push($DeformedHexagon, $Hexagon[10]-($ResizeParameter/2));
-		array_push($DeformedHexagon, $Hexagon[11]+($ResizeParameter/2));
+		array_push($DeformedHexagon, $Hexagon[11]+($ResizeParameter/1.5));
 	}
 	return $DeformedHexagon;
 }
@@ -270,7 +272,7 @@ function PrintAllHexagonsInArray($Info,$Hexagons,$MaxRes,$widthRect,$heightRect)
 	$prevGroup = "";
 	$GroupsAndColors = array();
 	usort($Info,"cmp");
-	echo '<svg style="background-color:'.$myBGColor.';"stroke-width=1;stroke=rgb(0,0,0)  height="'.$MaxRes.'" width="'.($MaxRes+$widthRect).'">';
+	echo '<meta http-equiv="content-type" content="application/xhtml+xml; charset=utf-8" /><svg style="background-color:'.$myBGColor.';"  height="'.$MaxRes.'" width="'.($MaxRes+$widthRect).'">';
 	foreach($Hexagons as $Hexagon) {
 		
 		//$Hexagon = ReturnDeformedHexagon($Hexagon,2,$Info[$HexagonCounter][2]);
@@ -285,7 +287,8 @@ function PrintAllHexagonsInArray($Info,$Hexagons,$MaxRes,$widthRect,$heightRect)
 			array_push($GroupsAndColors, array($Info[$HexagonCounter][0],$HexColor));
 		}
 		//$HexColor = GardientColor();
-		echo '" fill="'.$HexColor.'" stroke="black" stroke-width="1" title="'.$Info[$HexagonCounter][1].'" ></polygon>';
+		echo '" fill="'.$HexColor.'" stroke="white" stroke-width="4" title="'.$Info[$HexagonCounter][1].'" ></polygon>';
+		DrawTriangels($Hexagon,$myBGColor,$Info[$HexagonCounter][3]);
 		$HexagonCounter++;
 	}
 	$HexagonCounter=0;
@@ -341,6 +344,40 @@ function DrawHexagons($MaxRes,$Info){
 	
 }
 
+function DrawTriangels($Hexagon,$BGcolor,$Percent){
+	$Hexagon = ReturnDeformedHexagon($Hexagon,2,-10);
+	$ToSixPercent = ($Percent*6)/100;
+	$CenterOfTheHexagon = array($Hexagon[6]+(($Hexagon[0]-$Hexagon[6])/2),$Hexagon[11]+(($Hexagon[3]-$Hexagon[11])/2));
+	$openPoly = '<polygon class="hex" points="';
+	//$TriangelColor = hexToHsl(str_replace("#", "", $BGcolor));
+	/*echo '<text x=100 y=100>'.$TriangelColor[0].' '.$TriangelColor[1].' '.$TriangelColor[2].'</text>';
+	$TriangelColor[2]+=10;
+	$TriangelColorHex = "#".hslToHex($TriangelColor);
+	echo '<text x=100 y=200>'.$TriangelColorHex.'</text>';*/
+	$closePoly = '" fill="'.$BGcolor.'"  title="" ></polygon>';
+	
+	if($ToSixPercent>=1){
+		echo $openPoly.$Hexagon[8].','.$Hexagon[9].','.$Hexagon[10].','.$Hexagon[11].','.$CenterOfTheHexagon[0].','.$CenterOfTheHexagon[1].$closePoly;
+	}
+	if($ToSixPercent>=2){
+		echo $openPoly.$Hexagon[10].','.$Hexagon[11].','.$Hexagon[0].','.$Hexagon[1].','.$CenterOfTheHexagon[0].','.$CenterOfTheHexagon[1].$closePoly;
+	}
+	if($ToSixPercent>=3){
+		echo $openPoly.$Hexagon[0].','.$Hexagon[1].','.$Hexagon[2].','.$Hexagon[3].','.$CenterOfTheHexagon[0].','.$CenterOfTheHexagon[1].$closePoly;
+	}
+	if($ToSixPercent>=4){
+		echo $openPoly.$Hexagon[2].','.$Hexagon[3].','.$Hexagon[4].','.$Hexagon[5].','.$CenterOfTheHexagon[0].','.$CenterOfTheHexagon[1].$closePoly;
+	}
+	if($ToSixPercent>=5){
+		echo $openPoly.$Hexagon[4].','.$Hexagon[5].','.$Hexagon[6].','.$Hexagon[7].','.$CenterOfTheHexagon[0].','.$CenterOfTheHexagon[1].$closePoly;
+	}
+	if($ToSixPercent>=6){
+		echo $openPoly.$Hexagon[6].','.$Hexagon[7].','.$Hexagon[8].','.$Hexagon[9].','.$CenterOfTheHexagon[0].','.$CenterOfTheHexagon[1].$closePoly;
+	}
+	
+	
+}
+
 function CenterAllHexagons($Hexagons,$MaxRes,$widthRect){
 	$countDigitsX = 0;
 	$countDigitsY = 0;
@@ -380,25 +417,37 @@ function CenterAllHexagons($Hexagons,$MaxRes,$widthRect){
 
 // EXAMPLE USE
 function mainDrawHexagons(){
-	$Info = array(array("Res","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),
-	array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),
-	array("group1","Title 4",-3),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),
-	array("group1","Title 4",-3),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),
-	array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),
-	array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),
-	array("group1","Title 3",0),array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),
-	array("group2","Title 3",-2),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),
-	array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),
-	array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),
-	array("group1","Title 3",0),array("group1","Title 4",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),
-	array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),
-	array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),
-	array("group1","Title 3",0),array("group1","Title 4",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),
-	array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),
-	array("group1","Title 4",-3),array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),
-	array("group1","Title 3",0),array("group1","Title 4",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),array("group1","Title 4",-3),
-	array("group2","Title 1",-3),array("group2","Title 2",0),array("group2","Title 3",-2),array("group2","Title 4",-3),array("group1","Title 1",-3),array("group1","Title 1",-3),array("group3","Title 1",-3),array("group3","Title 1",-3),array("group4","Title 1",-3),array("group5","Title 1",0),array("group1","Title 1",-3),array("group1","Title 2",-6),array("group1","Title 3",0),
-	array("group1","Title 4",-3));
+	$Info = array(array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Respect","Title 1",-3,30),array("Respect","Title 1",-3,70),array("Respect","Title 1",-3,100),
+	array("Respect","Title 1",-3,30),array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Respect","Title 1",-3,30),array("Respect","Title 1",-3,70),array("Respect","Title 1",-3,100),
+	array("Respect","Title 1",-3,30),array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Respect","Title 1",-3,30),array("Respect","Title 1",-3,70),array("Respect","Title 1",-3,100),
+	array("Respect","Title 1",-3,30),array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Respect","Title 1",-3,30),array("Respect","Title 1",-3,70),array("Respect","Title 1",-3,100),
+	array("Respect","Title 1",-3,30),array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Respect","Title 1",-3,30),array("Respect","Title 1",-3,70),array("Respect","Title 1",-3,100),
+	array("Respect","Title 1",-3,30),array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
+	array("Respect","Title 1",-3,30),array("Respect","Title 1",-3,70),array("Respect","Title 1",-3,100),
+	array("Respect","Title 1",-3,30));
 	$MaxRes = 768;
 	DrawHexagons($MaxRes,$Info);
 }

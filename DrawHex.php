@@ -290,7 +290,7 @@ function PrintAllHexagonsInArray($Hexagons,$MaxRes,$widthRect,$heightRect){
 	foreach($MyGroups as $CurrentGroup){
 		$MyInfo = $wpdb->get_results("SELECT * FROM DrawHexTableInfo WHERE groupId = ".$CurrentGroup->id.";");
 		foreach($MyInfo as $MyCurrentInfo){
-			echo '<polygon id="hexagon'.$HexagonCounter.'" points="';
+			echo '<polygon class="hexagon'.$HexagonCounter.'" points="';
 			for ($i = 0; $i < count($Hexagons[$HexagonCounter]); $i++) {
 				echo $Hexagons[$HexagonCounter][$i].',';
 			}
@@ -299,9 +299,9 @@ function PrintAllHexagonsInArray($Hexagons,$MaxRes,$widthRect,$heightRect){
 		
 			//$HexColor = GardientColor();
 			echo '" fill="#'.$CurrentGroup->color.'" stroke="white" stroke-width="4" title="'.$MyCurrentInfo->title.'" ></polygon>';
-			DrawTriangels($Hexagons[$HexagonCounter],$myBGColor,$MyCurrentInfo->percentOfDone);
+			DrawTriangels($Hexagons[$HexagonCounter],$myBGColor,$MyCurrentInfo->percentOfDone,$HexagonCounter);
 			
-			$PoligonsMouseScript .= '<script>$("#hexagon'.$HexagonCounter.'").click(function(){
+			$PoligonsMouseScript .= '<script>$(".hexagon'.$HexagonCounter.'").click(function(){
 			$("#TaskInfoDiv").load("/wp-content/plugins/DrawHex/PrintTaskInfo.php?taskid='.$MyCurrentInfo->id.'");});</script>';
 			
 			$HexagonCounter++;
@@ -372,11 +372,11 @@ function DrawHexagons($MaxRes){
 	
 }
 
-function DrawTriangels($Hexagon,$BGcolor,$Percent){
+function DrawTriangels($Hexagon,$BGcolor,$Percent,$HexagonCounter){
 	$Hexagon = ReturnDeformedHexagon($Hexagon,2,-10);
 	$ToSixPercent = ($Percent*6)/100;
 	$CenterOfTheHexagon = array($Hexagon[6]+(($Hexagon[0]-$Hexagon[6])/2),$Hexagon[11]+(($Hexagon[3]-$Hexagon[11])/2));
-	$openPoly = '<polygon class="hex" points="';
+	$openPoly = '<polygon class="hexagon'.$HexagonCounter.'" points="';
 	//$TriangelColor = hexToHsl(str_replace("#", "", $BGcolor));
 	/*echo '<text x=100 y=100>'.$TriangelColor[0].' '.$TriangelColor[1].' '.$TriangelColor[2].'</text>';
 	$TriangelColor[2]+=10;

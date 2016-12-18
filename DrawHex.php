@@ -15,6 +15,7 @@ $up = array(0,-52);
 $leftDown = array(-45,26);
 $rightUp = array(45,-26);
 $leftUp = array(-45,-26);
+$PoligonsMouseScript="";
 
 if(isset($_GET["RefreshSvg"])){
 	error_reporting(E_ALL);
@@ -279,6 +280,8 @@ function ReturnCurrentResolutionOfAllHexagons($Hexagons,$MaxRes){
 
 function PrintAllHexagonsInArray($Hexagons,$MaxRes,$widthRect,$heightRect){
 	global $wpdb;
+	global $PoligonsMouseScript;
+	$PoligonsMouseScript="";
 	$myBGColor = GiveMeARandomHexColor(2,4);
 	$HexagonCounter=0;
 	$MyGroups = $wpdb->get_results("SELECT * FROM DrawHexTableGroups WHERE id IN (SELECT groupId FROM DrawHexTableInfo);");
@@ -287,7 +290,7 @@ function PrintAllHexagonsInArray($Hexagons,$MaxRes,$widthRect,$heightRect){
 	foreach($MyGroups as $CurrentGroup){
 		$MyInfo = $wpdb->get_results("SELECT * FROM DrawHexTableInfo WHERE groupId = ".$CurrentGroup->id.";");
 		foreach($MyInfo as $MyCurrentInfo){
-			echo '<polygon class="hex" points="';
+			echo '<polygon id="hexagon'.$HexagonCounter.'" points="';
 			for ($i = 0; $i < count($Hexagons[$HexagonCounter]); $i++) {
 				echo $Hexagons[$HexagonCounter][$i].',';
 			}
@@ -296,7 +299,11 @@ function PrintAllHexagonsInArray($Hexagons,$MaxRes,$widthRect,$heightRect){
 		
 			//$HexColor = GardientColor();
 			echo '" fill="#'.$CurrentGroup->color.'" stroke="white" stroke-width="4" title="'.$MyCurrentInfo->title.'" ></polygon>';
-			DrawTriangels($Hexagon,$myBGColor,$MyCurrentInfo->percentOfDone);
+			DrawTriangels($Hexagons[$HexagonCounter],$myBGColor,$MyCurrentInfo->percentOfDone);
+			
+			$PoligonsMouseScript .= '<script>$("#hexagon'.$HexagonCounter.'").click(function(){
+			$("#TaskInfoDiv").load("/wp-content/plugins/DrawHex/PrintTaskInfo.php?taskid='.$MyCurrentInfo->id.'");});</script>';
+			
 			$HexagonCounter++;
 		}
 	}
@@ -325,7 +332,8 @@ function PrintAllHexagonsInArray($Hexagons,$MaxRes,$widthRect,$heightRect){
 	}
 	
 	echo '</svg>';
-	echo '<script>document.body.style.backgroundColor = "'.$myBGColor.'"</script>';; 
+	echo '<script>document.body.style.backgroundColor = "'.$myBGColor.'"</script>';;
+	
 	//print_r($GroupsAndColors);
 }
 
@@ -438,6 +446,7 @@ function CenterAllHexagons($Hexagons,$MaxRes,$widthRect){
 // EXAMPLE USE
 function mainDrawHexagons(){
 	global $wpdb;
+	global $PoligonsMouseScript;
 	echo '<script src="/wp-content/plugins/DrawHex/jquery.min.js"></script><script src="/wp-content/plugins/DrawHex/jscolor-2.0.4/jscolor.js"></script>';
 	echo '<div id="PutHexagonSvgHere" style="float: left;">';
 	$ifTableExistsInfo = $wpdb->get_results("SELECT * FROM DrawHexTableInfo;");
@@ -445,13 +454,20 @@ function mainDrawHexagons(){
 	if(empty($ifTableExistsInfo)&&empty($ifTableExistsGroups)){
 		CreateTables();
 	}else{
-		DrawHexagons(768);
+		echo '<script>';
+		echo '$("#PutHexagonSvgHere").load("/wp-content/plugins/DrawHex/DrawHex.php?RefreshSvg=refreshit");';
+		echo '</script>';
 	}
 	echo '</div>';
+	echo ShowTaskInfoDiv();
+}
+
+function ShowTaskInfoDiv(){
+	echo '<div id="TaskInfoDiv" style="padding-left:25px;color:white;"></div>';
 }
 
 function ShowAddGroupMenu(){
-	echo '<div id="AddNewGroupDiv" style="padding-left:25px;float: left;">';
+	echo '<div id="AddNewGroupDiv" style="padding-left:25px;">';
 	echo '<h2 style="color:white;">Add new group</h2>';
 	echo '<div><p><input id="inputGroupName" type="text" placeholder="enter new group name"></p><p><input class="jscolor" value="ab2567"></p>';
 	echo '<p><button type="submit" id="CreateGroupButton">Create the group</button><p></div>';
@@ -469,12 +485,13 @@ function ShowAddGroupMenu(){
 }
 
 function ShowTaskAdder(){
-	echo '<div id="TaskAdder" style="padding-left:25px;float: left;"></div>';
+	echo '<div id="TaskAdder" style="padding-left:25px;"></div>';
 	echo '<script src="/wp-content/plugins/DrawHex/TaskAdderLoader.js"></script>';
 }
 
 if(isset($_GET["RefreshSvg"])){
 	DrawHexagons(768);
+	echo $PoligonsMouseScript;
 }
 
 ?>

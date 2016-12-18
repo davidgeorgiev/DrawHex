@@ -270,7 +270,7 @@ function PrintAllHexagonsInArray($Info,$Hexagons,$MaxRes,$widthRect,$heightRect)
 	$prevGroup = "";
 	$GroupsAndColors = array();
 	usort($Info,"cmp");
-	echo '<svg style="background-color:'.$myBGColor.';"  height="'.$MaxRes.'" width="'.($MaxRes+$widthRect).'">';
+	echo '<svg style="background-color:'.$myBGColor.';"stroke-width=1;stroke=rgb(0,0,0)  height="'.$MaxRes.'" width="'.($MaxRes+$widthRect).'">';
 	foreach($Hexagons as $Hexagon) {
 		
 		//$Hexagon = ReturnDeformedHexagon($Hexagon,2,$Info[$HexagonCounter][2]);

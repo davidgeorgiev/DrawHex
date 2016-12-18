@@ -5,7 +5,6 @@ Description: DrawingHexagonGraph
 Author: David Georgiev
 Version: 1.0
 */
-require "ColorsConv.php";
 
 $r = 0;
 $g = 0;

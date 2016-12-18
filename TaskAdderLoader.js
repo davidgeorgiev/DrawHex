@@ -1,0 +1,5 @@
+$(document).ready(
+	function(){
+		$("#TaskAdder").load("/wp-content/plugins/DrawHex/RefreshTaskAdder.php");
+	}
+);

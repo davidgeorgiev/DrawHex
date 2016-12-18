@@ -5,7 +5,6 @@ Description: DrawingHexagonGraph
 Author: David Georgiev
 Version: 1.0
 */
-
 $r = 0;
 $g = 0;
 $b = 0;
@@ -16,6 +15,20 @@ $up = array(0,-52);
 $leftDown = array(-45,26);
 $rightUp = array(45,-26);
 $leftUp = array(-45,-26);
+
+if(isset($_GET["RefreshSvg"])){
+	error_reporting(E_ALL);
+	ini_set('display_errors', 1);
+	require "../../../wp-load.php";
+}
+
+function CreateTables(){
+	global $wpdb;
+	$wpdb->get_results("DROP TABLE IF EXISTS DrawHexTableInfo;");
+	$wpdb->get_results("CREATE TABLE DrawHexTableInfo(id int NOT NULL AUTO_INCREMENT,groupId int,title varchar(255),description varchar(255),percentOfDone int,PRIMARY KEY (id)) ENGINE=InnoDB DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci;");
+	$wpdb->get_results("DROP TABLE IF EXISTS DrawHexTableGroups;");
+	$wpdb->get_results("CREATE TABLE DrawHexTableGroups(id int NOT NULL AUTO_INCREMENT,title varchar(255),color varchar(32),PRIMARY KEY (id)) ENGINE=InnoDB DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci;");
+}
 
 function ReturnRandomDir(){
 	$AllDirs = array("up","right-up","right-down","down","left-down","left-up");
@@ -264,59 +277,67 @@ function ReturnCurrentResolutionOfAllHexagons($Hexagons,$MaxRes){
 	return array($BiggestX-$SmallestX,$BiggestY-$SmallestY);
 }
 
-function PrintAllHexagonsInArray($Info,$Hexagons,$MaxRes,$widthRect,$heightRect){
+function PrintAllHexagonsInArray($Hexagons,$MaxRes,$widthRect,$heightRect){
+	global $wpdb;
 	$myBGColor = GiveMeARandomHexColor(2,4);
-	$HexColor = GiveMeARandomHexColor(5,15);
-	$HexagonCounter = 0;
-	$prevGroup = "";
-	$GroupsAndColors = array();
-	usort($Info,"cmp");
+	$HexagonCounter=0;
+	$MyGroups = $wpdb->get_results("SELECT * FROM DrawHexTableGroups WHERE id IN (SELECT groupId FROM DrawHexTableInfo);");
 	echo '<meta http-equiv="content-type" content="application/xhtml+xml; charset=utf-8" /><svg style="background-color:'.$myBGColor.';"  height="'.$MaxRes.'" width="'.($MaxRes+$widthRect).'">';
-	foreach($Hexagons as $Hexagon) {
+	
+	foreach($MyGroups as $CurrentGroup){
+		$MyInfo = $wpdb->get_results("SELECT * FROM DrawHexTableInfo WHERE groupId = ".$CurrentGroup->id.";");
+		foreach($MyInfo as $MyCurrentInfo){
+			echo '<polygon class="hex" points="';
+			for ($i = 0; $i < count($Hexagons[$HexagonCounter]); $i++) {
+				echo $Hexagons[$HexagonCounter][$i].',';
+			}
+		
+		
+		
+			//$HexColor = GardientColor();
+			echo '" fill="#'.$CurrentGroup->color.'" stroke="white" stroke-width="4" title="'.$MyCurrentInfo->title.'" ></polygon>';
+			DrawTriangels($Hexagon,$myBGColor,$MyCurrentInfo->percentOfDone);
+			$HexagonCounter++;
+		}
+	}
+	//foreach($Hexagons as $Hexagon) {
+		
+		
 		
 		//$Hexagon = ReturnDeformedHexagon($Hexagon,2,$Info[$HexagonCounter][2]);
 		
-		echo '<polygon class="hex" points="';
-		for ($i = 0; $i < count($Hexagon); $i++) {
-			echo $Hexagon[$i].',';
-		}
-		if($Info[$HexagonCounter][0]!=$prevGroup){
-			$prevGroup = $Info[$HexagonCounter][0];
-			$HexColor = GiveMeARandomHexColor(5,14);
-			array_push($GroupsAndColors, array($Info[$HexagonCounter][0],$HexColor));
-		}
-		//$HexColor = GardientColor();
-		echo '" fill="'.$HexColor.'" stroke="white" stroke-width="4" title="'.$Info[$HexagonCounter][1].'" ></polygon>';
-		DrawTriangels($Hexagon,$myBGColor,$Info[$HexagonCounter][3]);
-		$HexagonCounter++;
-	}
-	$HexagonCounter=0;
+		
+	//}
+	/*$HexagonCounter=0;
 	foreach($Hexagons as $Hexagon) {
 		$HexagonCounter++;
 		//echo '<text x='.($Hexagon[0]-45).' y='.($Hexagon[1]+5).'>'.$HexagonCounter.'</text>';
-	}
+	}*/
 	
 	$xRect = -$widthRect;
 	$yRect = -$heightRect;
-	foreach($GroupsAndColors as $Current){
+	foreach($MyGroups as $Current){
 			$xRect = 0;
 			$yRect+=$heightRect;
 		
-		echo '<rect x="'.$xRect.'" y="'.$yRect.'" width="'.$widthRect.'" height="'.$heightRect.'" style="fill:'.$Current[1].';stroke-width:1;stroke:rgb(0,0,0)" />';
-		echo '<text x='.($xRect+15).' y='.($yRect+($heightRect/2)+5).'>'.$Current[0].'</text>';
+		echo '<rect x="'.$xRect.'" y="'.$yRect.'" width="'.$widthRect.'" height="'.$heightRect.'" style="fill:#'.$Current->color.';stroke-width:1;stroke:rgb(0,0,0)" />';
+		echo '<text x='.($xRect+15).' y='.($yRect+($heightRect/2)+5).'>'.$Current->title.'</text>';
 	}
 	
 	echo '</svg>';
+	echo '<script>document.body.style.backgroundColor = "'.$myBGColor.'"</script>';; 
 	//print_r($GroupsAndColors);
 }
 
-function DrawHexagons($MaxRes,$Info){
+function DrawHexagons($MaxRes){
 	global $MyGlobalHistory;
+	global $wpdb;
+	$MyInfo = $wpdb->get_results("SELECT * FROM DrawHexTableInfo;");
 	$HexParams = array(60,30,45,56,15,56,0,30,15,4,45,4);
 	$HexParams = CenterHexagon($HexParams,$MaxRes);
 	
 	
-	for($k = 1; $k <= count($Info); $k++){
+	for($k = 1; $k <= count($MyInfo); $k++){
 		$TempHexagon = MoveHexagon($MaxRes,$HexParams,"",1,1);
 		if($TempHexagon!=-1){
 			$HexParams = $TempHexagon;
@@ -334,7 +355,7 @@ function DrawHexagons($MaxRes,$Info){
 	$CenteredArray = CenterAllHexagons($MyGlobalHistory,$MaxRes,$widthRect);
 	$MyGlobalHistory = $CenteredArray[2];
 	
-	PrintAllHexagonsInArray($Info,$MyGlobalHistory,$MaxRes,$widthRect,$heightRect);
+	PrintAllHexagonsInArray($MyGlobalHistory,$MaxRes,$widthRect,$heightRect);
 	
 	
 	/*foreach($MyGlobalHistory as $Point) {
@@ -416,45 +437,44 @@ function CenterAllHexagons($Hexagons,$MaxRes,$widthRect){
 
 // EXAMPLE USE
 function mainDrawHexagons(){
-	$Info = array(array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Respect","Title 1",-3,30),array("Respect","Title 1",-3,70),array("Respect","Title 1",-3,100),
-	array("Respect","Title 1",-3,30),array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Respect","Title 1",-3,30),array("Respect","Title 1",-3,70),array("Respect","Title 1",-3,100),
-	array("Respect","Title 1",-3,30),array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Respect","Title 1",-3,30),array("Днес","Title 1",-3,70),array("Respect","Title 1",-3,100),
-	array("Respect","Title 1",-3,30),array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Днес","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Respect","Title 1",-3,30),array("Respect","Title 1",-3,70),array("Respect","Title 1",-3,100),
-	array("Respect","Title 1",-3,30),array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Днес","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Respect","Title 1",-3,30),array("Respect","Title 1",-3,70),array("Respect","Title 1",-3,100),
-	array("Днес","Title 1",-3,30),array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Respect","Title 1",-3,30),array("Respect","Title 1",-3,70),array("Respect","Title 1",-3,100),
-	array("Respect","Title 1",-3,30),array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Res","Title 1",-3,30),array("Res","Title 1",-3,70),array("Res","Title 1",-3,100),
-	array("Respect","Title 1",-3,30),array("Respect","Title 1",-3,70),array("Respect","Title 1",-3,100),
-	array("Respect","Title 1",-3,30));
-	$MaxRes = 768;
-	DrawHexagons($MaxRes,$Info);
+	global $wpdb;
+	echo '<script src="/wp-content/plugins/DrawHex/jquery.min.js"></script><script src="/wp-content/plugins/DrawHex/jscolor-2.0.4/jscolor.js"></script>';
+	echo '<div id="PutHexagonSvgHere" style="float: left;">';
+	$ifTableExistsInfo = $wpdb->get_results("SELECT * FROM DrawHexTableInfo;");
+	$ifTableExistsGroups = $wpdb->get_results("SELECT * FROM DrawHexTableGroups;");
+	if(empty($ifTableExistsInfo)&&empty($ifTableExistsGroups)){
+		CreateTables();
+	}else{
+		DrawHexagons(768);
+	}
+	echo '</div>';
 }
 
+function ShowAddGroupMenu(){
+	echo '<div id="AddNewGroupDiv" style="padding-left:25px;float: left;">';
+	echo '<h2 style="color:white;">Add new group</h2>';
+	echo '<div><p><input id="inputGroupName" type="text" placeholder="enter new group name"></p><p><input class="jscolor" value="ab2567"></p>';
+	echo '<p><button type="submit" id="CreateGroupButton">Create the group</button><p></div>';
+	echo '<div id="statusDiv"></div>';
+	echo '</div>';
+	
+	echo "<script>";
+	echo "$(document).ready(function(){";
+	echo '$("#CreateGroupButton").click(function(){';
+	//echo 'alert("Hello! I am an alert box!!");';
+	echo '$("#statusDiv").load("/wp-content/plugins/DrawHex/AddNewGroup.php?groupName="+String($("#inputGroupName").val()).split(" ").join("+")+"&color="+String($(".jscolor").val()).split(" ").join("+"));';
+	echo '});';
+	echo '});';
+	echo "</script>";
+}
+
+function ShowTaskAdder(){
+	echo '<div id="TaskAdder" style="padding-left:25px;float: left;"></div>';
+	echo '<script src="/wp-content/plugins/DrawHex/TaskAdderLoader.js"></script>';
+}
+
+if(isset($_GET["RefreshSvg"])){
+	DrawHexagons(768);
+}
 
 ?>

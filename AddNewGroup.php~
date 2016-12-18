@@ -1,0 +1,22 @@
+<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+require "../../../wp-load.php";
+
+function AddNewGroup(){
+	global $wpdb;
+	$groupname = "";
+	$color = "";
+	if(isset($_GET["groupName"])){
+		$groupname = $_GET["groupName"];
+	}
+	if(isset($_GET["color"])){
+		$color = $_GET["color"];
+	}
+	$sql = "INSERT INTO DrawHexTableGroups(title, color) VALUES('".$groupname."','".$color."');";
+	$wpdb->get_results($sql);
+	//echo $sql;
+	echo '<script src="/wp-content/plugins/DrawHex/TaskAdderLoader.js"></script>';
+}
+AddNewGroup();
+?>

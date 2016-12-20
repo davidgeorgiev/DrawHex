@@ -328,7 +328,7 @@ function PrintAllHexagonsInArray($Hexagons,$MaxRes,$widthRect,$heightRect){
 			$yRect+=$heightRect;
 		
 		echo '<rect x="'.$xRect.'" y="'.$yRect.'" width="'.$widthRect.'" height="'.$heightRect.'" style="fill:#'.$Current->color.';stroke-width:1;stroke:rgb(0,0,0)" />';
-		echo '<text x='.($xRect+15).' y='.($yRect+($heightRect/2)+5).'>'.$Current->title.'</text>';
+		echo '<text fill="white" font-family="sans-serif" x='.($xRect+15).' y='.($yRect+($heightRect/2)+5).'>'.$Current->title.'</text>';
 	}
 	
 	echo '</svg>';
@@ -374,7 +374,7 @@ function DrawHexagons($MaxRes){
 
 function DrawTriangels($Hexagon,$BGcolor,$Percent,$HexagonCounter){
 	$Hexagon = ReturnDeformedHexagon($Hexagon,2,-10);
-	$ToSixPercent = ($Percent*6)/100;
+	$ToSixPercent = $Percent;
 	$CenterOfTheHexagon = array($Hexagon[6]+(($Hexagon[0]-$Hexagon[6])/2),$Hexagon[11]+(($Hexagon[3]-$Hexagon[11])/2));
 	$openPoly = '<polygon class="hexagon'.$HexagonCounter.'" points="';
 	//$TriangelColor = hexToHsl(str_replace("#", "", $BGcolor));

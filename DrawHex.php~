@@ -301,7 +301,7 @@ function PrintAllHexagonsInArray($Hexagons,$MaxRes,$widthRect,$heightRect){
 			echo '" fill="#'.$CurrentGroup->color.'" stroke="white" stroke-width="4" title="'.$MyCurrentInfo->title.'" ></polygon>';
 			DrawTriangels($Hexagons[$HexagonCounter],$myBGColor,$MyCurrentInfo->percentOfDone,$HexagonCounter);
 			
-			$PoligonsMouseScript .= '<script>$("#hexagon'.$HexagonCounter.'").click(function(){
+			$PoligonsMouseScript .= '<script>$(".hexagon'.$HexagonCounter.'").click(function(){
 			$("#TaskInfoDiv").load("/wp-content/plugins/DrawHex/PrintTaskInfo.php?taskid='.$MyCurrentInfo->id.'");});</script>';
 			
 			$HexagonCounter++;
@@ -328,7 +328,7 @@ function PrintAllHexagonsInArray($Hexagons,$MaxRes,$widthRect,$heightRect){
 			$yRect+=$heightRect;
 		
 		echo '<rect x="'.$xRect.'" y="'.$yRect.'" width="'.$widthRect.'" height="'.$heightRect.'" style="fill:#'.$Current->color.';stroke-width:1;stroke:rgb(0,0,0)" />';
-		echo '<text x='.($xRect+15).' y='.($yRect+($heightRect/2)+5).'>'.$Current->title.'</text>';
+		echo '<text fill="white" font-family="sans-serif" x='.($xRect+15).' y='.($yRect+($heightRect/2)+5).'>'.$Current->title.'</text>';
 	}
 	
 	echo '</svg>';

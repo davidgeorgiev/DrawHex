@@ -8,6 +8,7 @@ function NewTaskInsert(){
 	$taskname = "";
 	$description = "";
 	$groupid = "";
+	$taskDate = "";
 	if(isset($_GET["groupid"])){
 		$groupid = $_GET["groupid"];
 	}
@@ -17,7 +18,10 @@ function NewTaskInsert(){
 	if(isset($_GET["description"])){
 		$description = $_GET["description"];
 	}
-	$sql = "INSERT INTO DrawHexTableInfo(groupId,title,description,percentOfDone) VALUES(".$groupid.",'".$taskname."','".$description."',0);";
+	if(isset($_GET["taskDate"])){
+		$taskDate = $_GET["taskDate"];
+	}
+	$sql = "INSERT INTO DrawHexTableInfo(groupId,title,description,percentOfDone,taskDate) VALUES(".$groupid.",'".$taskname."','".$description."',0,'".$taskDate."');";
 	$wpdb->get_results($sql);
 	//echo $sql;
 	echo "<script>";

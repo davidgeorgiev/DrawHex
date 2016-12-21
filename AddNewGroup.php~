@@ -17,6 +17,9 @@ function AddNewGroup(){
 	$wpdb->get_results($sql);
 	//echo $sql;
 	echo '<script src="/wp-content/plugins/DrawHex/TaskAdderLoader.js"></script>';
+	echo "<script>";
+	echo '$("#PutHexagonSvgHere").load("/wp-content/plugins/DrawHex/DrawHex.php?ShowTaskAdder=showit");';
+	echo "</script>";
 }
 AddNewGroup();
 ?>

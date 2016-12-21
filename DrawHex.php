@@ -17,7 +17,7 @@ $rightUp = array(45,-26);
 $leftUp = array(-45,-26);
 $PoligonsMouseScript="";
 
-if(isset($_GET["RefreshSvg"])){
+if(isset($_GET["RefreshSvg"])||isset($_GET["DeleteTables"])){
 	error_reporting(E_ALL);
 	ini_set('display_errors', 1);
 	require "../../../wp-load.php";
@@ -26,7 +26,7 @@ if(isset($_GET["RefreshSvg"])){
 function CreateTables(){
 	global $wpdb;
 	$wpdb->get_results("DROP TABLE IF EXISTS DrawHexTableInfo;");
-	$wpdb->get_results("CREATE TABLE DrawHexTableInfo(id int NOT NULL AUTO_INCREMENT,groupId int,title varchar(255),description varchar(255),percentOfDone int,PRIMARY KEY (id)) ENGINE=InnoDB DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci;");
+	$wpdb->get_results("CREATE TABLE DrawHexTableInfo(id int NOT NULL AUTO_INCREMENT,groupId int,title varchar(255),description varchar(255),percentOfDone int,taskDate DATE,PRIMARY KEY (id)) ENGINE=InnoDB DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci;");
 	$wpdb->get_results("DROP TABLE IF EXISTS DrawHexTableGroups;");
 	$wpdb->get_results("CREATE TABLE DrawHexTableGroups(id int NOT NULL AUTO_INCREMENT,title varchar(255),color varchar(32),PRIMARY KEY (id)) ENGINE=InnoDB DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_unicode_ci;");
 }
@@ -278,6 +278,21 @@ function ReturnCurrentResolutionOfAllHexagons($Hexagons,$MaxRes){
 	return array($BiggestX-$SmallestX,$BiggestY-$SmallestY);
 }
 
+function ReturnRemainingDays($TimeStr){
+	date_default_timezone_set('Europe/Sofia');
+	$date = date('Y-m-d', time());
+	$date1 = new DateTime($date);  //current date or any date
+	$date2 = new DateTime($TimeStr);   //Future date
+	$diff = $date2->diff($date1)->format("%a");  //find difference
+	$days = intval($diff);   //rounding days
+	if($date1>$date2){
+		$days*=-1;
+	}
+	return $days;
+}
+
+
+
 function PrintAllHexagonsInArray($Hexagons,$MaxRes,$widthRect,$heightRect){
 	global $wpdb;
 	global $PoligonsMouseScript;
@@ -285,7 +300,7 @@ function PrintAllHexagonsInArray($Hexagons,$MaxRes,$widthRect,$heightRect){
 	$myBGColor = GiveMeARandomHexColor(2,4);
 	$HexagonCounter=0;
 	$MyGroups = $wpdb->get_results("SELECT * FROM DrawHexTableGroups WHERE id IN (SELECT groupId FROM DrawHexTableInfo);");
-	echo '<meta http-equiv="content-type" content="application/xhtml+xml; charset=utf-8" /><svg style="background-color:'.$myBGColor.';"  height="'.$MaxRes.'" width="'.($MaxRes+$widthRect).'">';
+	echo '<meta http-equiv="content-type" content="application/xhtml+xml; charset=utf-8" /><svg style="background-color:'.$myBGColor.';"  height="'.($MaxRes*2).'" width="'.($MaxRes+$widthRect).'">';
 	
 	foreach($MyGroups as $CurrentGroup){
 		$MyInfo = $wpdb->get_results("SELECT * FROM DrawHexTableInfo WHERE groupId = ".$CurrentGroup->id.";");
@@ -296,11 +311,20 @@ function PrintAllHexagonsInArray($Hexagons,$MaxRes,$widthRect,$heightRect){
 			}
 		
 		
-		
+			
 			//$HexColor = GardientColor();
 			echo '" fill="#'.$CurrentGroup->color.'" stroke="white" stroke-width="4" title="'.$MyCurrentInfo->title.'" ></polygon>';
 			DrawTriangels($Hexagons[$HexagonCounter],$myBGColor,$MyCurrentInfo->percentOfDone,$HexagonCounter);
-			
+			$CenterOfTheHexagon = ReturnTheCenterOfAHexagon($Hexagons[$HexagonCounter]);
+			$RemainingDays = ReturnRemainingDays($MyCurrentInfo->taskDate);
+			if($RemainingDays < 0){
+				$RemainingDays*=-1;
+				$TextColor = "red";
+			}else{
+				$TextColor = "white";
+			}
+			//echo '<circle cx="'.$CenterOfTheHexagon[0].'" cy="'.$CenterOfTheHexagon[1].'" r="22" stroke="white" stroke-width="1" fill="gray" />';
+			echo '<text font-family="sans-serif" font-weight=900 fill="'.$TextColor.'" x='.($CenterOfTheHexagon[0]-17).' y='.($CenterOfTheHexagon[1]+5).'>'.$RemainingDays.'</text>';
 			$PoligonsMouseScript .= '<script>$(".hexagon'.$HexagonCounter.'").click(function(){
 			$("#TaskInfoDiv").load("/wp-content/plugins/DrawHex/PrintTaskInfo.php?taskid='.$MyCurrentInfo->id.'");});</script>';
 			
@@ -372,10 +396,14 @@ function DrawHexagons($MaxRes){
 	
 }
 
+function ReturnTheCenterOfAHexagon($Hexagon){
+	return array($Hexagon[6]+(($Hexagon[0]-$Hexagon[6])/2),$Hexagon[11]+(($Hexagon[3]-$Hexagon[11])/2));
+}
+
 function DrawTriangels($Hexagon,$BGcolor,$Percent,$HexagonCounter){
 	$Hexagon = ReturnDeformedHexagon($Hexagon,2,-10);
 	$ToSixPercent = $Percent;
-	$CenterOfTheHexagon = array($Hexagon[6]+(($Hexagon[0]-$Hexagon[6])/2),$Hexagon[11]+(($Hexagon[3]-$Hexagon[11])/2));
+	$CenterOfTheHexagon = ReturnTheCenterOfAHexagon($Hexagon);
 	$openPoly = '<polygon class="hexagon'.$HexagonCounter.'" points="';
 	//$TriangelColor = hexToHsl(str_replace("#", "", $BGcolor));
 	/*echo '<text x=100 y=100>'.$TriangelColor[0].' '.$TriangelColor[1].' '.$TriangelColor[2].'</text>';
@@ -448,17 +476,23 @@ function mainDrawHexagons(){
 	global $wpdb;
 	global $PoligonsMouseScript;
 	echo '<script src="/wp-content/plugins/DrawHex/jquery.min.js"></script><script src="/wp-content/plugins/DrawHex/jscolor-2.0.4/jscolor.js"></script>';
+	echo '<style>body{background-color:black;font-family: arial;}</style>';
+	
 	echo '<div id="PutHexagonSvgHere" style="float: left;">';
 	$ifTableExistsInfo = $wpdb->get_results("SELECT * FROM DrawHexTableInfo;");
 	$ifTableExistsGroups = $wpdb->get_results("SELECT * FROM DrawHexTableGroups;");
 	if(empty($ifTableExistsInfo)&&empty($ifTableExistsGroups)){
 		CreateTables();
-	}else{
-		echo '<script>';
-		echo '$("#PutHexagonSvgHere").load("/wp-content/plugins/DrawHex/DrawHex.php?RefreshSvg=refreshit");';
-		echo '</script>';
+	}
+	if(!empty($ifTableExistsGroups)){
+		if(!empty($ifTableExistsInfo)){
+			echo '<script>';
+			echo '$("#PutHexagonSvgHere").load("/wp-content/plugins/DrawHex/DrawHex.php?RefreshSvg=refreshit");';
+			echo '</script>';
+		}
 	}
 	echo '</div>';
+	ShowDeleteTablesButton();
 	echo ShowTaskInfoDiv();
 }
 
@@ -467,6 +501,7 @@ function ShowTaskInfoDiv(){
 }
 
 function ShowAddGroupMenu(){
+	global $wpdb;
 	echo '<div id="AddNewGroupDiv" style="padding-left:25px;">';
 	echo '<h2 style="color:white;">Add new group</h2>';
 	echo '<div><p><input id="inputGroupName" type="text" placeholder="enter new group name"></p><p><input class="jscolor" value="ab2567"></p>';
@@ -482,6 +517,7 @@ function ShowAddGroupMenu(){
 	echo '});';
 	echo '});';
 	echo "</script>";
+	
 }
 
 function ShowTaskAdder(){
@@ -489,9 +525,23 @@ function ShowTaskAdder(){
 	echo '<script src="/wp-content/plugins/DrawHex/TaskAdderLoader.js"></script>';
 }
 
+function ShowDeleteTablesButton(){
+	echo '<div><p><button style="color:white;background-color:red;" type="submit" id="RecreateTablesButton">Recreate all tables</button><p></div>';
+	echo "<script>";
+	echo "$(document).ready(function(){";
+	echo '$("#RecreateTablesButton").click(function(){';
+	echo '$("#statusDiv").load("/wp-content/plugins/DrawHex/DrawHex.php?DeleteTables=deletethem");';
+	echo '});';
+	echo '});';
+	echo "</script>";
+}
+
 if(isset($_GET["RefreshSvg"])){
 	DrawHexagons(768);
 	echo $PoligonsMouseScript;
+}
+if(isset($_GET["DeleteTables"])){
+	CreateTables();
 }
 
 ?>
